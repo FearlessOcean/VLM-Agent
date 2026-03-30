@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>数学几何绘图审查仪表盘 📐</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+h1 { text-align: center; color: #2c3e50; margin-bottom: 40px; }
+.card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 40px; overflow: hidden; border: 1px solid #e1e4e8; }
+.card-header { background: #2c3e50; color: white; padding: 15px 25px; font-size: 1.1em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+.status { padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
+.status.success { background: #2ecc71; color: white; }
+.status.error { background: #e74c3c; color: white; }
+.card-body { padding: 25px; }
+.img-comparison { display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 20px; }
+.img-box { flex: 1; min-width: 320px; text-align: center; border: 2px dashed #d1d8e0; padding: 15px; border-radius: 8px; background: #fafbfc; position: relative; }
+.img-box img { max-width: 100%; height: auto; max-height: 400px; object-fit: contain; cursor: pointer; transition: transform 0.2s; }
+.img-box img:hover { transform: scale(1.02); }
+.img-box h3 { margin-top: 0; margin-bottom: 15px; color: #7f8c8d; font-size: 1.1em; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+.code-section, .error-section { margin-top: 20px; border-top: 1px solid #ecf0f1; padding-top: 15px; }
+pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', Consolas, Monaco, monospace; font-size: 0.95em; border: 1px solid #1e2127; }
+.error-log pre { background: #fdf5f6; color: #cb2431; border: 1px solid #f8c9d1; }
+details summary { cursor: pointer; font-weight: bold; color: #0366d6; user-select: none; font-size: 1.05em; padding: 5px 0; }
+details summary:hover { color: #005cc5; }
+</style>
+</head>
+<body>
+<h1>📐 Python & Matplotlib 几何绘图复刻审阅仪表盘</h1>
+<div class='card'>
+<div class='card-header'><span>📄 任务原图: test_image.png</span> <span class='status success'>渲染成功 ✨</span></div>
+<div class='card-body'>
+<div class='img-comparison'>
+<div class='img-box'>
+<h3>🖼️ 提供给 AI 的原图 (Original)</h3>
+<a href='LangChain-WorkSpace/test_image.png' target='_blank'><img src='LangChain-WorkSpace/test_image.png' alt='Original'></a>
+</div>
+<div class='img-box'>
+<h3>✨ AI 生成的 Matplotlib 渲染图 (Result)</h3>
+<a href='LangChain-WorkSpace/test_image_output/question.png' target='_blank'><img src='LangChain-WorkSpace/test_image_output/question.png' alt='Generated'></a>
+</div>
+</div>
+<div class='code-section'>
+<details><summary>💻 点击查看生成的 Python 代码</summary>
+<pre><code>import matplotlib.pyplot as plt
+import numpy as np
+
+# 设置字体和数学公式样式
+plt.rcParams['mathtext.fontset'] = 'stix'
+plt.rcParams['font.family'] = 'serif'
+
+# 创建图形
+fig, ax = plt.subplots(figsize=(6, 4))
+
+# 定义点的坐标
+A = (0, 0)
+B = (6, 0)
+C = (2, 3)
+D = (5, 2)
+M = (3.5, 4)
+E = (3.5, 1)
+
+# 绘制三角形和辅助线
+ax.plot([A[0], B[0]], [A[1], B[1]], 'k-', lw=1.5)  # AB
+ax.plot([A[0], C[0]], [A[1], C[1]], 'k-', lw=1.5)  # AC
+ax.plot([B[0], D[0]], [B[1], D[1]], 'k-', lw=1.5)  # BD
+ax.plot([C[0], M[0]], [C[1], M[1]], 'k-', lw=1.5)  # CM
+ax.plot([D[0], M[0]], [D[1], M[1]], 'k-', lw=1.5)  # DM
+ax.plot([C[0], E[0]], [C[1], E[1]], 'k-', lw=1.5)  # CE
+ax.plot([D[0], E[0]], [D[1], E[1]], 'k-', lw=1.5)  # DE
+
+# 标注点
+ax.text(A[0] - 0.3, A[1] - 0.3, r'$A$', fontsize=14, ha='center', va='center')
+ax.text(B[0] + 0.3, B[1] - 0.3, r'$B$', fontsize=14, ha='center', va='center')
+ax.text(C[0] - 0.3, C[1] + 0.3, r'$C$', fontsize=14, ha='center', va='center')
+ax.text(D[0] + 0.3, D[1] + 0.3, r'$D$', fontsize=14, ha='center', va='center')
+ax.text(M[0], M[1] + 0.3, r'$M$', fontsize=14, ha='center', va='center')
+ax.text(E[0] + 0.3, E[1] - 0.3, r'$E$', fontsize=14, ha='center', va='center')
+
+# 绘制直角符号
+def draw_right_angle(ax, p1, p2, p3, size=0.2):
+    """绘制直角符号"""
+    dx1, dy1 = p2[0] - p1[0], p2[1] - p1[1]
+    dx2, dy2 = p3[0] - p2[0], p3[1] - p2[1]
+    norm1 = np.sqrt(dx1**2 + dy1**2)
+    norm2 = np.sqrt(dx2**2 + dy2**2)
+    dx1, dy1 = dx1 / norm1 * size, dy1 / norm1 * size
+    dx2, dy2 = dx2 / norm2 * size, dy2 / norm2 * size
+    ax.plot([p1[0] + dx1, p1[0] + dx1 + dx2], 
+            [p1[1] + dy1, p1[1] + dy1 + dy2], 'k-', lw=1)
+
+draw_right_angle(ax, C, A, M)
+draw_right_angle(ax, D, B, M)
+draw_right_angle(ax, C, E, D)
+
+# 设置比例和隐藏坐标轴
+ax.set_aspect('equal')
+ax.axis('off')
+
+# 保存图像
+plt.savefig('question.png', dpi=300, bbox_inches='tight')</code></pre>
+</details>
+</div>
+</div>
+</div>
+</body></html>

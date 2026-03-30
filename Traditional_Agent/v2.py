@@ -134,7 +134,7 @@ def process_single_image(image_path, task_dir):
 
 def start_batch_job(input_folder_name):
     input_path = Path(input_folder_name)
-    output_root = Path("Review_Folder")
+    output_root = Path("../Traditional_WorkSpace/Review_Folder")
     output_root.mkdir(exist_ok=True)
 
     files = list(input_path.glob("*.png")) + list(input_path.glob("*.jpg")) + list(input_path.glob("*.jpeg"))
@@ -164,7 +164,7 @@ def start_batch_job(input_folder_name):
 
 if __name__ == "__main__":
     # 使用前确保此文件夹存在并放入图片
-    source_dir = "source_images" 
+    source_dir = "../Traditional_WorkSpace/source_images" 
     if os.path.exists(source_dir):
         start_batch_job(source_dir)
     else:

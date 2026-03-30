@@ -4,133 +4,170 @@ from pathlib import Path
 def generate_dashboard(workspace_dir="LangChain-WorkSpace", output_file="dashboard.html"):
     workspace = Path(workspace_dir)
     if not workspace.exists():
-        print(f"❌ 找不到工作目录 '{workspace_dir}'，请先运行你的大模型生成代码。")
+        print(f"❌ 找不到工作目录 '{workspace_dir}'，请先运行大模型生成代码。")
         return
 
     # 支持的图片后缀
     valid_extensions = {".jpg", ".jpeg", ".png"}
-    # 扫描根目录下的所有原图
-    original_images =[
+    original_images = sorted([
         f for f in workspace.iterdir() 
         if f.is_file() and f.suffix.lower() in valid_extensions
-    ]
+    ])
 
     if not original_images:
         print(f"⚠️ 在 '{workspace_dir}' 目录下没有找到任何原图，无法生成仪表盘。")
         return
 
-    # ---------------- 仪表盘 HTML 前端模板 ---------------- 
+    # ---------------- 极简表格 HTML & JS 脚本 ---------------- 
     html_content =[
         "<!DOCTYPE html>",
-        "<html lang='zh-CN'>",
+        "<html>",
         "<head>",
-        "<meta charset='UTF-8'>",
-        "<meta name='viewport' content='width=device-width, initial-scale=1.0'>",
-        "<title>数学几何绘图审查仪表盘 📐</title>",
+        "<meta charset='utf-8'>",
+        "<title>测试结果对照看板</title>",
         "<style>",
-        "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }",
-        "h1 { text-align: center; color: #2c3e50; margin-bottom: 40px; }",
-        ".card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 40px; overflow: hidden; border: 1px solid #e1e4e8; }",
-        ".card-header { background: #2c3e50; color: white; padding: 15px 25px; font-size: 1.1em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }",
-        ".status { padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }",
-        ".status.success { background: #2ecc71; color: white; }",
-        ".status.error { background: #e74c3c; color: white; }",
-        ".card-body { padding: 25px; }",
-        ".img-comparison { display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 20px; }",
-        ".img-box { flex: 1; min-width: 320px; text-align: center; border: 2px dashed #d1d8e0; padding: 15px; border-radius: 8px; background: #fafbfc; position: relative; }",
-        ".img-box img { max-width: 100%; height: auto; max-height: 400px; object-fit: contain; cursor: pointer; transition: transform 0.2s; }",
-        ".img-box img:hover { transform: scale(1.02); }",
-        ".img-box h3 { margin-top: 0; margin-bottom: 15px; color: #7f8c8d; font-size: 1.1em; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }",
-        ".code-section, .error-section { margin-top: 20px; border-top: 1px solid #ecf0f1; padding-top: 15px; }",
-        "pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', Consolas, Monaco, monospace; font-size: 0.95em; border: 1px solid #1e2127; }",
-        ".error-log pre { background: #fdf5f6; color: #cb2431; border: 1px solid #f8c9d1; }",
-        "details summary { cursor: pointer; font-weight: bold; color: #0366d6; user-select: none; font-size: 1.05em; padding: 5px 0; }",
-        "details summary:hover { color: #005cc5; }",
+        "  body { font-family: sans-serif; margin: 20px; }",
+        "  h1 { text-align: center; }",
+        "  table { width: 100%; border-collapse: collapse; margin-top: 20px; }",
+        "  th, td { border: 1px solid #ccc; padding: 15px 10px; text-align: center; vertical-align: top; }",
+        "  th { background-color: #f2f2f2; }",
+        "  img { max-width: 350px; max-height: 350px; object-fit: contain; }",
+        "  .code-cell { text-align: left; max-width: 450px; }",
+        "  pre { background: #f8f9fa; padding: 10px; overflow-x: auto; font-size: 13px; border: 1px solid #ddd; margin-top: 5px; }",
+        "  .error-text { color: red; font-weight: bold; }",
+        "  .success-text { color: green; font-weight: bold; }",
+        "  details { margin-top: 10px; }",
+        "  summary { cursor: pointer; color: #0366d6; font-weight: bold; margin-bottom: 8px; }",
+        "  .btn { cursor: pointer; padding: 6px 12px; font-size: 13px; border: 1px solid #bbb; border-radius: 4px; background: #fff; transition: background 0.2s; font-weight: bold; }",
+        "  .btn:hover { background: #e9ecef; }",
+        "  .btn-container { margin-top: 10px; }",
+        "  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed #ddd; padding-bottom: 10px; }",
         "</style>",
+        "<script>",
+        "  // 复制图片到剪贴板",
+        "  async function copyImg(imgId, btn) {",
+        "      const originalText = btn.innerHTML;",
+        "      try {",
+        "          const img = document.getElementById(imgId);",
+        "          const canvas = document.createElement('canvas');",
+        "          canvas.width = img.naturalWidth || img.width;",
+        "          canvas.height = img.naturalHeight || img.height;",
+        "          const ctx = canvas.getContext('2d');",
+        "          ctx.drawImage(img, 0, 0);",
+        "          canvas.toBlob(async (blob) => {",
+        "              await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);",
+        "              btn.innerHTML = '✅ 已复制图片';",
+        "              setTimeout(() => btn.innerHTML = originalText, 2000);",
+        "          }, 'image/png');",
+        "      } catch (err) {",
+        "          alert('复制失败，浏览器可能因本地权限拦截，请右键图片复制。');",
+        "      }",
+        "  }",
+        "  // 复制代码（含Markdown包裹）到剪贴板",
+        "  async function copyMd(codeId, btn) {",
+        "      const originalText = btn.innerHTML;",
+        "      try {",
+        "          /* 此处关键修正：改为 textContent 从而在代码被折叠（隐藏）时不丢失文本内容 */ ",
+        "          const codeText = document.getElementById(codeId).textContent;",
+        "          const markdown = '```python\\n' + codeText + '\\n```';",
+        "          await navigator.clipboard.writeText(markdown);",
+        "          btn.innerHTML = '✅ 已复制 Markdown';",
+        "          setTimeout(() => btn.innerHTML = originalText, 2000);",
+        "      } catch (err) {",
+        "          alert('复制失败！');",
+        "      }",
+        "  }",
+        "</script>",
         "</head>",
         "<body>",
-        "<h1>📐 Python & Matplotlib 几何绘图复刻审阅仪表盘</h1>"
+        "<h1>📊 测试结果对照看板</h1>",
+        "<table>",
+        "  <tr>",
+        "    <th width='15%'>任务原图名称</th>",
+        "    <th width='25%'>原图 (Original)</th>",
+        "    <th width='25%'>生成图 (Generated)</th>",
+        "    <th width='35%'>运行状态 & 代码</th>",
+        "  </tr>"
     ]
 
-    # 按文件名称做一层排序
-    for img_file in sorted(original_images):
-        stem = img_file.stem  # 文件名无后缀 (如 q1)
+    for idx, img_file in enumerate(original_images):
+        stem = img_file.stem
         output_folder = workspace / f"{stem}_output"
         gen_image = output_folder / "question.png"
         code_file = output_folder / "generated_code.py"
         error_file = output_folder / "error_log.txt"
 
-        # 判断状态
         has_error = error_file.exists()
         has_gen_image = gen_image.exists()
-        
-        status_class = "error" if has_error else "success"
-        status_text = "渲染失败 ❌" if has_error else "渲染成功 ✨"
 
-        # 处理相对路径，供 HTML 使用 (兼容 Windows/Mac)
         rel_orig_img = f"{workspace_dir}/{img_file.name}".replace('\\', '/')
         rel_gen_img = f"{workspace_dir}/{output_folder.name}/question.png".replace('\\', '/')
-
-        # 构建任务卡片
-        html_content.append("<div class='card'>")
-        html_content.append(f"<div class='card-header'><span>📄 任务原图: {img_file.name}</span> <span class='status {status_class}'>{status_text}</span></div>")
-        html_content.append("<div class='card-body'>")
         
-        # ========== 图片并排对比部分 ==========
-        html_content.append("<div class='img-comparison'>")
-        
-        # 1. 提供给大模型的原始题图
-        html_content.append("<div class='img-box'>")
-        html_content.append("<h3>🖼️ 提供给 AI 的原图 (Original)</h3>")
-        html_content.append(f"<a href='{rel_orig_img}' target='_blank'><img src='{rel_orig_img}' alt='Original'></a>")
-        html_content.append("</div>")
+        # 赋予每一行的图片和代码唯一 ID，用于 JS 抓取
+        img_id = f"gen_img_{idx}"
+        code_id = f"code_{idx}"
 
-        # 2. AI 产出的生成的图
-        html_content.append("<div class='img-box'>")
-        html_content.append("<h3>✨ AI 生成的 Matplotlib 渲染图 (Result)</h3>")
+        html_content.append("  <tr>")
+        
+        # 1. 任务名称
+        html_content.append(f"    <td><strong>{img_file.name}</strong></td>")
+        
+        # 2. 原图
+        html_content.append(f"    <td><a href='{rel_orig_img}' target='_blank'><img src='{rel_orig_img}'></a></td>")
+        
+        # 3. 生成图
         if has_gen_image:
-            html_content.append(f"<a href='{rel_gen_img}' target='_blank'><img src='{rel_gen_img}' alt='Generated'></a>")
+            html_content.append(f"    <td>")
+            html_content.append(f"      <a href='{rel_gen_img}' target='_blank'><img id='{img_id}' src='{rel_gen_img}'></a>")
+            html_content.append(f"      <div class='btn-container'>")
+            html_content.append(f"          <button class='btn' onclick='copyImg(\"{img_id}\", this)'>📋 复制图片</button>")
+            html_content.append(f"      </div>")
+            html_content.append(f"    </td>")
         else:
-            html_content.append("<div style='color:#e74c3c; padding: 60px 0; font-size: 18px;'>⚠️ 未生成图片（请查看代码或报错）</div>")
-        html_content.append("</div>")
+            html_content.append("    <td class='error-text'><br><br>未生成图片<br>(渲染失败)</td>")
 
-        html_content.append("</div>") # 图片对比结束
-
-        # ========== 代码检查部分 ==========
-        if code_file.exists():
-            code_text = code_file.read_text(encoding="utf-8")
-            # HTML 转义，防止由于代码里的 < > 导致前端页面崩盘
-            code_text = code_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            html_content.append("<div class='code-section'>")
-            # 无报错默认折叠代码，有报错时可以选择展开
-            html_content.append("<details><summary>💻 点击查看生成的 Python 代码</summary>")
-            html_content.append(f"<pre><code>{code_text}</code></pre>")
-            html_content.append("</details>")
-            html_content.append("</div>")
-
-        # ========== 报错日志部分 ==========
+        # 4. 代码与状态区
+        html_content.append("    <td class='code-cell'>")
+        
+        # ---- 顶部常驻栏：渲染状态 & 外部的一键复制按钮 ----
+        html_content.append("      <div class='top-bar'>")
         if has_error:
-            error_text = error_file.read_text(encoding="utf-8")
-            error_text = error_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            html_content.append("<div class='error-section error-log'>")
-            # 如果有错误，默认展开报错面板
-            html_content.append("<details open><summary>🚨 渲染失败！点击查看报错日志 (Error Log)</summary>")
-            html_content.append(f"<pre>{error_text}</pre>")
-            html_content.append("</details>")
-            html_content.append("</div>")
+            html_content.append("        <span class='error-text'>❌ 渲染报错</span>")
+        else:
+            html_content.append("        <span class='success-text'>✅ 渲染成功</span>")
+        
+        if code_file.exists():
+            html_content.append(f"        <button class='btn' onclick='copyMd(\"{code_id}\", this)'>📋 复制代码</button>")
+        
+        html_content.append("      </div>")
 
-        html_content.append("</div>") # card-body 结束
-        html_content.append("</div>") # card 结束
+        # ---- 报错面板（仅报错时出现并默认展开） ----
+        if has_error:
+            error_text = error_file.read_text(encoding="utf-8").replace("<", "&lt;").replace(">", "&gt;")
+            html_content.append(f"      <details open><summary>查看报错日志</summary><pre>{error_text}</pre></details>")
 
-    html_content.append("</body></html>")
+        # ---- 代码面板（成功生成时默认折叠） ----
+        if code_file.exists():
+            code_text = code_file.read_text(encoding="utf-8").replace("<", "&lt;").replace(">", "&gt;")
+            # 如果有错展开，没错就折叠
+            open_attr = "open" if has_error else ""
+            html_content.append(f"      <details {open_attr}><summary>查看 Python 源码</summary>")
+            html_content.append(f"        <pre id='{code_id}'>{code_text}</pre>")
+            html_content.append(f"      </details>")
+        
+        html_content.append("    </td>")
+        html_content.append("  </tr>")
 
-    # 写入最终的 HTML 文件
+    html_content.append("</table>")
+    html_content.append("</body>")
+    html_content.append("</html>")
+
+    # 写入文件
     with open(output_file, "w", encoding="utf-8") as f:
         f.write("\n".join(html_content))
 
-    print(f"🎉 仪表盘已生成完毕！")
-    print(f"👉 【使用方法】: 请在浏览器中双击打开该文件: {os.path.abspath(output_file)}")
+    print(f"🎉 仪表盘带复制功能（按钮外置版）生成完毕！")
+    print(f"👉 请在浏览器中打开: {os.path.abspath(output_file)}")
 
 if __name__ == "__main__":
-    # 执行生成
     generate_dashboard()

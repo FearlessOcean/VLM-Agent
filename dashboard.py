@@ -1,7 +1,9 @@
 import os
+import html
 from pathlib import Path
 
-def generate_dashboard(review_dir="Traditional_WorkSpace\Review_Folder"):
+# 注意：这里加了 'r' 解决路径字符串中的斜杠转义问题
+def generate_dashboard(review_dir=r"Traditional_WorkSpace\Review_Folder"):
     review_path = Path(review_dir).absolute()
     if not review_path.exists():
         print(f"错误：找不到文件夹 {review_path}")
@@ -19,7 +21,7 @@ def generate_dashboard(review_dir="Traditional_WorkSpace\Review_Folder"):
             body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
             .task-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin: 0 auto 30px auto; max-width: 1200px; padding: 20px; border: 1px solid #e8e8e8; }
             .task-header { font-size: 1.1em; font-weight: bold; border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; }
-            .comparison { summarize: flex; display: flex; gap: 20px; align-items: flex-start; }
+            .comparison { display: flex; gap: 20px; align-items: flex-start; }
             .img-box { flex: 1; text-align: center; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
             .img-box img { max-width: 100%; max-height: 400px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 10px; }
             .controls { flex: 0 0 260px; display: flex; flex-direction: column; gap: 10px; }
@@ -77,7 +79,19 @@ def generate_dashboard(review_dir="Traditional_WorkSpace\Review_Folder"):
         <h1 style="text-align:center;">几何绘图核验控制台</h1>
     """
 
-    tasks = sorted([d for d in review_path.iterdir() if d.is_dir() and d.name.endswith("_task")])
+    # --- 核心修改区：让任务按数字自然排序 ---
+    # 1. 先过滤出所有目标文件夹
+    tasks_raw =[d for d in review_path.iterdir() if d.is_dir() and d.name.endswith("_task")]
+    
+    # 2. 定义排序规则：提取 "_task" 前面的部分并转换为整数
+    def get_task_num(path_obj):
+        prefix = path_obj.name.split('_')[0]
+        # 如果前缀是数字，就按数字大小排；否则放到最后面 (float('inf'))
+        return int(prefix) if prefix.isdigit() else float('inf')
+        
+    # 3. 按照数字大小重新排序
+    tasks = sorted(tasks_raw, key=get_task_num)
+    # ----------------------------------------
 
     for task_dir in tasks:
         task_name = task_dir.name
@@ -87,7 +101,7 @@ def generate_dashboard(review_dir="Traditional_WorkSpace\Review_Folder"):
         gen_img_url = gen_img_file.relative_to(review_path).as_posix() if gen_img_file.exists() else None
         
         # 查找其他参考图
-        other_imgs = []
+        other_imgs =[]
         for f in task_dir.iterdir():
             if f.is_file() and f.suffix.lower() in IMG_EXTS and f.name != "question.png":
                 other_imgs.append(f.relative_to(review_path).as_posix())
@@ -95,6 +109,9 @@ def generate_dashboard(review_dir="Traditional_WorkSpace\Review_Folder"):
         # 获取代码
         code_file = task_dir / "generated_code.py"
         code_text = code_file.read_text(encoding="utf-8") if code_file.exists() else ""
+        
+        # 对代码进行 HTML 转义，防止 HTML 注入破坏 DOM 结构
+        safe_code_text = html.escape(code_text)
 
         html_content += f"""
         <div class="task-card">
@@ -121,7 +138,7 @@ def generate_dashboard(review_dir="Traditional_WorkSpace\Review_Folder"):
                 
                 <!-- 右：操作区 -->
                 <div class="controls">
-                    <textarea id="code_{task_name}">{code_text}</textarea>
+                    <textarea id="code_{task_name}">{safe_code_text}</textarea>
                     
                     <button class="btn btn-blue" onclick="copyText(document.getElementById('code_{task_name}').value, this)">
                         复制纯代码内容

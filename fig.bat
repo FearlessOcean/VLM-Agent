@@ -6,7 +6,7 @@ echo   几何绘图脚本批量强制执行工具 (Geometry Drawer Bat)
 echo ======================================================
 
 :: 设定目标根目录
-set "TARGET_DIR=Review_Folder"
+set "TARGET_DIR=Traditional_WorkSpace\Review_Folder"
 
 if not exist "%TARGET_DIR%" (
     echo [错误] 找不到文件夹: %TARGET_DIR%

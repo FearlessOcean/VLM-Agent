@@ -5,10 +5,10 @@ import json
 import re
 
 # ================= 核心配置区 =================
-TOKEN = "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzQ5MjkyMzIsImlhdCI6MTc3NDkyMjAzMiwibmJmIjoxNzc0OTIyMDMyLCJzdWIiOiIyMzExMDM5NzIzNjUwOTY4MDB8Knzmm7nmtbfmtIt8KnxjOTQxZmIwNC1kMmMxLTU2ZjQtOWMyMC0zZGZkMGM0MDgzZGN8Knw2ZTAzZmIwYS01OTJjLTQ4NzMtYTFiMi02OTcyOWRjMDE2M2UifQ.HkNRGxT-ZoubPGYiCaFi_8pWqLLhIYWnJhrp7IlocMGNYdqw_Ov8CucvCwqwTWL-f2vRs6KKvY7w_0L0SudAxA"
+TOKEN = "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzUwMTU0OTAsImlhdCI6MTc3NTAwODI5MCwibmJmIjoxNzc1MDA4MjkwLCJzdWIiOiIyMzExMDM5NzIzNjUwOTY4MDB8Knzmm7nmtbfmtIt8KnxjOTQxZmIwNC1kMmMxLTU2ZjQtOWMyMC0zZGZkMGM0MDgzZGN8Knw1YjIwOGM0MS04NTBjLTQ1YTktYWY1ZC0zMjQ4MmZmYTJiMWQifQ.GbRM367w-bmFq7f-qVzt2hlp7BqxKJ3yVfHdzjc0flGzMTn27u9wb-uEPuxT9uShwpCz9DLRpXIzwGfBsUCaHg"
 
 TASK_ID = 241851
-START_DATE = "1774918800"
+START_DATE = "1775005200"
 TAGGER_ID = "c941fb04-d2c1-56f4-9c20-3dfd0c4083dc"
 
 HEADERS = {
@@ -19,7 +19,7 @@ HEADERS = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/146.0.0.0 Safari/537.36'
 }
 
-SAVE_DIR = "dataset_images"
+SAVE_DIR = "dataset_images_41"
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 

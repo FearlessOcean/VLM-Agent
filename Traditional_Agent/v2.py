@@ -10,7 +10,7 @@ import numpy as np
 # --- 基础配置 ---
 API_KEY = "sk-k7fyyns8nfJxqFLYcQJC41rJdBFSBeHjTZuig7lZrOPmEpi5"
 BASE_URL = "https://hiapi.online/v1"
-MODEL_NAME = "gemini-3-flash"
+MODEL_NAME = "gemini-3-pro"
 
 client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
@@ -164,7 +164,7 @@ def start_batch_job(input_folder_name):
 
 if __name__ == "__main__":
     # 使用前确保此文件夹存在并放入图片
-    source_dir = "../Traditional_WorkSpace/source_images" 
+    source_dir = "dataset_images" 
     if os.path.exists(source_dir):
         start_batch_job(source_dir)
     else:
